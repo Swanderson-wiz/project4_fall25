@@ -31,15 +31,15 @@ void sendmsg (char *user, char *target, char *msg) {
 	// Send a request to the server to send the message (msg) to the target user (target)
 	// by creating the message structure and writing it to server's FIFO
 	int server_fd;
-    struct message req;
+    struct message send;
     
-    strncpy(req.source, user, sizeof(req.source) - 1);
+    strncpy(send.source, user, sizeof(send.source) - 1);
     req.source[sizeof(req.source) - 1] = '\0';
     
-    strncpy(req.target, target, sizeof(req.target) - 1);
+    strncpy(send.target, target, sizeof(send.target) - 1);
     req.target[sizeof(req.target) - 1] = '\0';
     
-    strncpy(req.msg, msg, sizeof(req.msg) - 1);
+    strncpy(send.msg, msg, sizeof(send.msg) - 1);
     req.msg[sizeof(req.msg) - 1] = '\0';
     
     server_fd = open("serverFIFO", O_WRONLY);
@@ -49,7 +49,7 @@ void sendmsg (char *user, char *target, char *msg) {
         return;
     }//end fail open if
     
-    ssize_t bytes_written = write(server_fd, &req, sizeof(struct message));
+    ssize_t bytes_written = write(server_fd, &send, sizeof(struct message));
     
     if (bytes_written == -1) {
         perror("rsh: Failed to write to serverFIFO");	
