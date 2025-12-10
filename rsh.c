@@ -96,10 +96,8 @@ void* messageListener(void *arg) {
         	ssize_t bytes_read = read(user_fd, &incoming, sizeof(struct message));
         
         	if (bytes_read == sizeof(struct message)) {
-            		fprintf(stdout, "\nIncoming message from [%s]: %s\n", incoming.source, incoming.msg);
-            		fprintf(stderr, "rsh>"); 
+            		fprintf(stdout, "\nIncoming message from %s: %s\n", incoming.source, incoming.msg);
             		fflush(stdout); 
-            		fflush(stderr); 
         	} else if (bytes_read == 0) {
             		close(user_fd);
             		user_fd = open(uName, O_RDONLY);
