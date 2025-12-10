@@ -67,7 +67,7 @@ void* messageListener(void *arg) {
 	// Incoming message from [source]: [message]
 	// put an end of line at the end of the message
 	int user_fd;
-    int temp_writer_fd;
+    int dummy_writer_fd;
     struct message incoming;
     
     if (mkfifo(uName, 0666) == -1) {
@@ -83,7 +83,7 @@ void* messageListener(void *arg) {
         pthread_exit((void*)1); 
     }//end read failure if
     
-    temp_writer_fd = open(uName, O_WRONLY);
+    dummy_writer_fd = open(uName, O_WRONLY);
     if (dummy_writer_fd == -1) {
         perror("listener: Failed to open user FIFO for dummy writing");
         close(user_fd);
