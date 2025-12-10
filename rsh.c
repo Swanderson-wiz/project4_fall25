@@ -34,13 +34,13 @@ void sendmsg (char *user, char *target, char *msg) {
     struct message send;
     
     strncpy(send.source, user, sizeof(send.source) - 1);
-    req.source[sizeof(req.source) - 1] = '\0';
+    send.source[sizeof(send.source) - 1] = '\0';
     
     strncpy(send.target, target, sizeof(send.target) - 1);
-    req.target[sizeof(req.target) - 1] = '\0';
+    send.target[sizeof(send.target) - 1] = '\0';
     
     strncpy(send.msg, msg, sizeof(send.msg) - 1);
-    req.msg[sizeof(req.msg) - 1] = '\0';
+    send.msg[sizeof(send.msg) - 1] = '\0';
     
     server_fd = open("serverFIFO", O_WRONLY);
     
