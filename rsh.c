@@ -6,6 +6,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 #define N 13
 
@@ -31,31 +33,31 @@ void sendmsg (char *user, char *target, char *msg) {
 	// Send a request to the server to send the message (msg) to the target user (target)
 	// by creating the message structure and writing it to server's FIFO
 	int server_fd;
-    struct message send;
+    	struct message send;
     
-    strncpy(send.source, user, sizeof(send.source) - 1);
-    send.source[sizeof(send.source) - 1] = '\0';
+    	strncpy(send.source, user, sizeof(send.source) - 1);
+    	send.source[sizeof(send.source) - 1] = '\0';
     
-    strncpy(send.target, target, sizeof(send.target) - 1);
-    send.target[sizeof(send.target) - 1] = '\0';
+    	strncpy(send.target, target, sizeof(send.target) - 1);
+    	send.target[sizeof(send.target) - 1] = '\0';
     
-    strncpy(send.msg, msg, sizeof(send.msg) - 1);
-    send.msg[sizeof(send.msg) - 1] = '\0';
+    	strncpy(send.msg, msg, sizeof(send.msg) - 1);
+    	send.msg[sizeof(send.msg) - 1] = '\0';
     
-    server_fd = open("serverFIFO", O_WRONLY);
+    	server_fd = open("serverFIFO", O_WRONLY);
     
-    if (server_fd == -1) {
-        perror("rsh: Failed to open serverFIFO.");
-        return;
-    }//end fail open if
+    	if (server_fd == -1) {
+        	perror("rsh: Failed to open serverFIFO.");
+        	return;
+    	}//end fail open if
     
-    ssize_t bytes_written = write(server_fd, &send, sizeof(struct message));
+    	ssize_t bytes_written = write(server_fd, &send, sizeof(struct message));
     
-    if (bytes_written == -1) {
-        perror("rsh: Failed to write to serverFIFO");	
-    }//end fail write if  
+    	if (bytes_written == -1) {
+        	perror("rsh: Failed to write to serverFIFO");	
+    	}//end fail write if  
     
-    close(server_fd);
+    	close(server_fd);
 }//end sendmsg
 
 void* messageListener(void *arg) {
@@ -67,40 +69,52 @@ void* messageListener(void *arg) {
 	// Incoming message from [source]: [message]
 	// put an end of line at the end of the message
 	int user_fd;
-    int dummy_writer_fd;
-    struct message incoming;
+    	int dummy_writer_fd;
+    	struct message incoming;
     
-    if (mkfifo(uName, 0666) == -1) {
-        if (errno != EEXIST) {
-            perror("listener: Failed to create user FIFO");
-            pthread_exit((void*)1); 
-        }//end FIFO exist check if
-    }//end user mkfifo if
+    	if (mkfifo(uName, 0666) == -1) {
+        	if (errno != EEXIST) {
+            		perror("listener: Failed to create user FIFO");
+            		pthread_exit((void*)1); 
+        	}//end FIFO exist check if
+    	}//end user mkfifo if
     
-    user_fd = open(uName, O_RDONLY);
-    if (user_fd == -1) {
-        perror("listener: Failed to open user FIFO for reading");
-        pthread_exit((void*)1); 
-    }//end read failure if
+    	user_fd = open(uName, O_RDONLY);
+    	if (user_fd == -1) {
+        	perror("listener: Failed to open user FIFO for reading");
+        	pthread_exit((void*)1); 
+    	}//end read failure if
     
-    dummy_writer_fd = open(uName, O_WRONLY);
-    if (dummy_writer_fd == -1) {
-        perror("listener: Failed to open user FIFO for dummy writing");
-        close(user_fd);
-        pthread_exit((void*)1);
-    }//end write failure if
+    	dummy_writer_fd = open(uName, O_WRONLY);
+    	if (dummy_writer_fd == -1) {
+        	perror("listener: Failed to open user FIFO for dummy writing");
+        	close(user_fd);
+        	pthread_exit((void*)1);
+    	}//end write failure if
     
-    fprintf(stderr, "rsh: Listening for messages on FIFO '%s'...\n", uName);
-	fflush(stdout);
+    	while (1) {
+        	ssize_t bytes_read = read(user_fd, &incoming, sizeof(struct message));
+        
+        	if (bytes_read == sizeof(struct message)) {
+            		fprintf(stdout, "\nIncoming message from [%s]: %s\n", incoming.source, incoming.msg);
+            		fprintf(stderr, "rsh>"); 
+            		fflush(stdout); 
+            		fflush(stderr); 
+        	} else if (bytes_read == 0) {
+            		close(user_fd);
+            		user_fd = open(uName, O_RDONLY);
+            		if (user_fd == -1) {
+                		perror("re-open user FIFO");
+                		break; 
+            		}//end error loop
+        	} else if (bytes_read == -1) {
+            		perror("read from user FIFO");
+            		break;
+        	}//end error/print loop
+    	}//end message while
     
-    while (1) {
-        ssize_t bytes_read = read(user_fd, &incoming, sizeof(struct message));
-        fprintf(stdout, "\nIncoming message from [%s]: %s\nrsh>", incoming.source, incoming.msg);
-        fflush(stdout); 
-    }//end message while
-    
-    close(user_fd);
-    close(dummy_writer_fd);
+    	close(user_fd);
+    	close(dummy_writer_fd);
 	pthread_exit((void*)0);
 }//end messageListener
 
