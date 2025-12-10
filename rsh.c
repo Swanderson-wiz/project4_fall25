@@ -91,6 +91,7 @@ void* messageListener(void *arg) {
     }//end write failure if
     
     fprintf(stderr, "rsh: Listening for messages on FIFO '%s'...\n", uName);
+	fflush(stdout);
     
     while (1) {
         ssize_t bytes_read = read(user_fd, &incoming, sizeof(struct message));
