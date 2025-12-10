@@ -45,7 +45,7 @@ void sendmsg (char *user, char *target, char *msg) {
     server_fd = open("serverFIFO", O_WRONLY);
     
     if (server_fd == -1) {
-        perror("rsh: Failed to open serverFIFO. Is the server running and is the FIFO created?");
+        perror("rsh: Failed to open serverFIFO.");
         return;
     }//end fail open if
     
@@ -81,14 +81,14 @@ void* messageListener(void *arg) {
     if (user_fd == -1) {
         perror("listener: Failed to open user FIFO for reading");
         pthread_exit((void*)1); 
-    }//end failure if
+    }//end read failure if
     
     temp_writer_fd = open(uName, O_WRONLY);
     if (dummy_writer_fd == -1) {
         perror("listener: Failed to open user FIFO for dummy writing");
         close(user_fd);
         pthread_exit((void*)1);
-    }//end failure if
+    }//end write failure if
     
     fprintf(stderr, "rsh: Listening for messages on FIFO '%s'...\n", uName);
     
